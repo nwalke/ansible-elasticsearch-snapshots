@@ -1,0 +1,50 @@
+---
+
+- name: Check if plugin is already installed
+  stat:
+    path: "{{ es_snapshot_plugins_directory }}/{{ es_snapshot_plugin_name }}"
+  register: es_snapshot_plugin_installed
+  become: yes
+
+- name: Install plugin
+  shell: "ES_INCLUDE={{ es_snapshot_include_file }} {{ es_snapshot_plugin_binary_path }} install -b {{ es_snapshot_plugin_name }}"
+  become: yes
+  notify: restart elasticsearch
+  register: config_updated
+  when: es_snapshot_plugin_installed.stat.isdir is not defined
+
+- meta: flush_handlers
+
+- name: Check if we've set up the snapshot repository
+  uri:
+    url: "http://{{ es_snapshot_elasticsearch_address }}:{{ es_snapshot_elasticsearch_rest_port }}/_snapshot"
+    method: GET
+  register: es_snapshot_snapshot_results
+
+- name: Set up snapshot repository
+  uri:
+    url: "http://{{ es_snapshot_elasticsearch_address }}:{{ es_snapshot_elasticsearch_rest_port }}/_snapshot/{{ es_snapshot_repository_name}}"
+    method: PUT
+    body:
+      type: s3
+      settings:
+        bucket: "{{ es_snapshot_bucket_name }}"
+        endpoint: "s3-{{ es_snapshot_bucket_region }}.amazonaws.com"
+    body_format: json
+  when: es_snapshot_snapshot_results.json.{{ es_snapshot_repository_name }} is not defined
+
+- name: Write snapshot script
+  template:
+    src: snapshot_es.sh.j2
+    dest: "{{ es_snapshot_snapshot_script_path }}"
+    mode: 0750
+    owner: root
+    group: elasticsearch
+  become: yes
+
+- name: Set up snapshot cron job
+  cron:
+    name: "snapshot ES"
+    special_time: "{{ es_snapshot_cron_time }}"
+    job: "{{ es_snapshot_snapshot_script_path }}"
+  when: schedule_es_snapshots

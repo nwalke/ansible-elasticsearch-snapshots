@@ -1,0 +1,14 @@
+---
+es_snapshot_share_directory: /usr/share/elasticsearch
+es_snapshot_plugin_binary_path: "{{ es_snapshot_share_directory }}/bin/plugin"
+es_snapshot_snapshot_script_path: "{{ es_snapshot_share_directory }}/bin/snapshot.sh"
+es_snapshot_plugin_name: cloud-aws
+es_snapshot_include_file: /etc/default/elasticsearch
+es_snapshot_elasticsearch_address: 127.0.0.1
+es_snapshot_elasticsearch_rest_port: 9200
+es_snapshot_repository_name: my_s3_repository
+es_snapshot_bucket_name: my_s3_bucket
+es_snapshot_bucket_region: us-east-1
+es_snapshot_plugins_directory: "{{ es_snapshot_share_directory }}/plugins"
+es_snapshot_cron_time: daily
+schedule_es_snapshots: False

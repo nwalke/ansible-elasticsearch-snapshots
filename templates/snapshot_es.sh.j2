@@ -1,0 +1,3 @@
+#!/bin/bash
+snapshotName=$(date -d "today" +"%Y%m%d%H%M")
+curl -XPUT {{ es_snapshot_elasticsearch_address }}:{{ es_snapshot_elasticsearch_rest_port }}/_snapshot/{{ es_snapshot_repository_name }}/$snapshotName?wait_for_completion=true
